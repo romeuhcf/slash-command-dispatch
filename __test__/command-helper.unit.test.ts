@@ -24,6 +24,7 @@ describe('command-helper tests', () => {
       allowEdits: false,
       repository: 'peter-evans/slash-command-dispatch',
       eventTypeSuffix: '-command',
+      skipNamedArgs: false,
       staticArgs: [],
       dispatchType: 'repository',
       config: '',
@@ -57,6 +58,7 @@ describe('command-helper tests', () => {
       allowEdits: true,
       repository: 'owner/repo',
       eventTypeSuffix: '-cmd',
+      skipNamedArgs: false,
       staticArgs: ['production', 'region=us-east-1'],
       dispatchType: 'workflow',
       config: '',
@@ -136,6 +138,7 @@ describe('command-helper tests', () => {
     expect(config[1].command).toEqual(commands[1])
     expect(config[1].permission).toEqual('read')
     expect(config[1].issue_type).toEqual(commandDefaults.issue_type)
+    expect(config[1].skip_named_args).toBeFalsy()
     expect(config[1].static_args).toEqual(['production', 'region=us-east-1'])
     expect(config[1].dispatch_type).toEqual('workflow')
   })
@@ -149,6 +152,7 @@ describe('command-helper tests', () => {
         allow_edits: false,
         repository: 'peter-evans/slash-command-dispatch',
         event_type_suffix: '-command',
+        skip_named_args: false,
         static_args: [],
         dispatch_type: 'repository'
       }
@@ -165,6 +169,7 @@ describe('command-helper tests', () => {
         allow_edits: false,
         repository: 'peter-evans/slash-command-dispatch',
         event_type_suffix: '-command',
+        skip_named_args: false,
         static_args: [],
         dispatch_type: 'repository'
       }
@@ -181,6 +186,7 @@ describe('command-helper tests', () => {
         allow_edits: false,
         repository: 'peter-evans/slash-command-dispatch',
         event_type_suffix: '-command',
+        skip_named_args: false,
         static_args: [],
         dispatch_type: 'repository'
       }
@@ -197,6 +203,7 @@ describe('command-helper tests', () => {
         allow_edits: false,
         repository: 'peter-evans/slash-command-dispatch',
         event_type_suffix: '-command',
+        skip_named_args: false,
         static_args: [],
         dispatch_type: 'test-case-invalid-dispatch-type'
       }
@@ -250,6 +257,7 @@ describe('command-helper tests', () => {
 
   test('slash command payload with unnamed args', async () => {
     const commandTokens = ['test', 'arg1', 'arg2', 'arg3']
+    const skipNamedArgs = false
     const staticArgs = []
     const payload: SlashCommandPayload = {
       command: 'test',
@@ -264,7 +272,7 @@ describe('command-helper tests', () => {
         named: {}
       }
     }
-    expect(getSlashCommandPayload(commandTokens, staticArgs)).toEqual(payload)
+    expect(getSlashCommandPayload(commandTokens, staticArgs, skipNamedArgs)).toEqual(payload)
   })
 
   test('slash command payload with named args', async () => {
@@ -275,6 +283,7 @@ describe('command-helper tests', () => {
       'test-id=123',
       'arg2'
     ]
+    const skipNamedArgs = false
     const staticArgs = []
     const payload: SlashCommandPayload = {
       command: 'test',
@@ -291,11 +300,12 @@ describe('command-helper tests', () => {
         }
       }
     }
-    expect(getSlashCommandPayload(commandTokens, staticArgs)).toEqual(payload)
+    expect(getSlashCommandPayload(commandTokens, staticArgs, skipNamedArgs)).toEqual(payload)
   })
 
   test('slash command payload with named args and static args', async () => {
     const commandTokens = ['test', 'branch=main', 'arg1', 'dry-run']
+    const skipNamedArgs = false
     const staticArgs = ['production', 'region=us-east-1']
     const payload: SlashCommandPayload = {
       command: 'test',
@@ -313,7 +323,30 @@ describe('command-helper tests', () => {
         }
       }
     }
-    expect(getSlashCommandPayload(commandTokens, staticArgs)).toEqual(payload)
+    expect(getSlashCommandPayload(commandTokens, staticArgs, skipNamedArgs)).toEqual(payload)
+  })
+
+  test('slash command payload with static args and skipping named args', async () => {
+    const commandTokens = ['test', 'branch=main', 'arg4', 'dry-run']
+    const skipNamedArgs = true
+    const staticArgs = ['production', 'region=us-east-1']
+    const payload: SlashCommandPayload = {
+      command: 'test',
+      args: {
+        all: 'production region=us-east-1 branch=main arg4 dry-run',
+        unnamed: {
+          all: 'production region=us-east-1 branch=main arg4 dry-run',
+          arg1: 'production',
+          arg2: 'region=us-east-1',
+          arg3: 'branch=main',
+          arg4: 'arg4',
+          arg5: 'dry-run'
+        },
+        named: {
+        }
+      }
+    }
+    expect(getSlashCommandPayload(commandTokens, staticArgs, skipNamedArgs)).toEqual(payload)
   })
 
   test('slash command payload with quoted args', async () => {
@@ -326,6 +359,7 @@ describe('command-helper tests', () => {
       `"j \\"k\\""`,
       `l="m \\"n\\" o"`
     ]
+    const skipNamedArgs = false
     const staticArgs = [`msg="x y z"`]
     const payload: SlashCommandPayload = {
       command: `test`,
@@ -345,11 +379,12 @@ describe('command-helper tests', () => {
         }
       }
     }
-    expect(getSlashCommandPayload(commandTokens, staticArgs)).toEqual(payload)
+    expect(getSlashCommandPayload(commandTokens, staticArgs, skipNamedArgs)).toEqual(payload)
   })
 
   test('slash command payload with malformed named args', async () => {
     const commandTokens = ['test', 'branch=', 'arg1', 'e.nv=prod', 'arg2']
+    const skipNamedArgs = false
     const staticArgs = []
     const payload: SlashCommandPayload = {
       command: 'test',
@@ -365,7 +400,7 @@ describe('command-helper tests', () => {
         named: {}
       }
     }
-    expect(getSlashCommandPayload(commandTokens, staticArgs)).toEqual(payload)
+    expect(getSlashCommandPayload(commandTokens, staticArgs, skipNamedArgs)).toEqual(payload)
   })
 
   test('slash command payload with malformed quoted args', async () => {
@@ -379,6 +414,7 @@ describe('command-helper tests', () => {
       `\\"quoted`,
       'value'
     ]
+    const skipNamedArgs = false
     const staticArgs = []
     const payload: SlashCommandPayload = {
       command: 'test',
@@ -398,6 +434,6 @@ describe('command-helper tests', () => {
         }
       }
     }
-    expect(getSlashCommandPayload(commandTokens, staticArgs)).toEqual(payload)
+    expect(getSlashCommandPayload(commandTokens, staticArgs, skipNamedArgs)).toEqual(payload)
   })
 })

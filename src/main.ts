@@ -174,7 +174,8 @@ async function run(): Promise<void> {
       // Generate slash command payload
       clientPayload.slash_command = getSlashCommandPayload(
         commandTokens,
-        cmd.static_args
+        cmd.static_args,
+        cmd.skip_named_args
       )
       core.debug(
         `Slash command payload: ${inspect(clientPayload.slash_command)}`

@@ -80,6 +80,7 @@ This action also features [advanced configuration](docs/advanced-configuration.m
 | `allow-edits` | Allow edited comments to trigger command dispatches. | `false` |
 | `repository` | The full name of the repository to send the dispatch events. | Current repository |
 | `event-type-suffix` | The repository dispatch event type suffix for the commands. | `-command` |
+| `skip-named-args` | Skip named arguments parsing | `false` |
 | `static-args` | A comma or newline separated list of arguments that will be dispatched with every command. | |
 | `dispatch-type` | The dispatch type; `repository` or `workflow`. See [dispatch-type](#dispatch-type) for further details. | `repository` |
 | `config` | | JSON configuration for commands. See [Advanced configuration](docs/advanced-configuration.md) | |

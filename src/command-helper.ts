@@ -21,6 +21,7 @@ export interface Inputs {
   allowEdits: boolean
   repository: string
   eventTypeSuffix: string
+  skipNamedArgs: boolean
   staticArgs: string[]
   dispatchType: string
   config: string
@@ -34,6 +35,7 @@ export interface Command {
   allow_edits: boolean
   repository: string
   event_type_suffix: string
+  skip_named_args: boolean
   static_args: string[]
   dispatch_type: string
 }
@@ -58,6 +60,7 @@ export const commandDefaults = Object.freeze({
   allow_edits: false,
   repository: process.env.GITHUB_REPOSITORY || '',
   event_type_suffix: '-command',
+  skip_named_args: false,
   static_args: [],
   dispatch_type: 'repository'
 })
@@ -84,6 +87,7 @@ export function getInputs(): Inputs {
     allowEdits: core.getInput('allow-edits') === 'true',
     repository: core.getInput('repository'),
     eventTypeSuffix: core.getInput('event-type-suffix'),
+    skipNamedArgs: core.getInput('skip-named-args') === 'true',
     staticArgs: utils.getInputAsArray('static-args'),
     dispatchType: core.getInput('dispatch-type'),
     config: core.getInput('config'),
@@ -120,6 +124,7 @@ export function getCommandsConfigFromInputs(inputs: Inputs): Command[] {
       allow_edits: inputs.allowEdits,
       repository: inputs.repository,
       event_type_suffix: inputs.eventTypeSuffix,
+      skip_named_args: inputs.skipNamedArgs,
       static_args: inputs.staticArgs,
       dispatch_type: inputs.dispatchType
     }
@@ -143,6 +148,7 @@ export function getCommandsConfigFromJson(json: string): Command[] {
       event_type_suffix: jc.event_type_suffix
         ? jc.event_type_suffix
         : commandDefaults.event_type_suffix,
+      skip_named_args: toBool(jc.skip_named_args, commandDefaults.skip_named_args),
       static_args: jc.static_args
         ? jc.static_args
         : commandDefaults.static_args,
@@ -217,7 +223,8 @@ function stripQuotes(input: string): string {
 
 export function getSlashCommandPayload(
   commandTokens: string[],
-  staticArgs: string[]
+  staticArgs: string[],
+  skipNamedArgs: boolean
 ): SlashCommandPayload {
   const payload: SlashCommandPayload = {
     command: commandTokens[0],
@@ -240,7 +247,7 @@ export function getSlashCommandPayload(
     let unnamedCount = 1
     const unnamedArgs: string[] = []
     for (const argWord of argWords) {
-      if (NAMED_ARG_REGEX.test(argWord)) {
+      if (!skipNamedArgs && NAMED_ARG_REGEX.test(argWord)) {
         const result = NAMED_ARG_REGEX.exec(argWord)
         if (result && result.groups) {
           payload.args.named[`${result.groups['name']}`] = stripQuotes(

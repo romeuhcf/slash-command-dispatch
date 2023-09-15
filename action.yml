@@ -30,6 +30,9 @@ inputs:
     default: -command
   static-args:
     description: 'A comma or newline separated list of arguments that will be dispatched with every command.'
+  skip-named-args:
+    description: 'Skip named arguments when parsing commands.'
+    default: false
   dispatch-type:
     description: 'The dispatch type; `repository` or `workflow`.'
     default: repository
